@@ -1,0 +1,17 @@
+node_modules/
+dist/
+artifacts/
+coverage/
+playwright-report/
+test-results/
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.crx
+*.log
+.idea/
+.vscode/*
+!.vscode/tasks.json

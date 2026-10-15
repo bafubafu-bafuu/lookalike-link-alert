@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Lookalike Link Alert",
+  "description": "URL の類似文字や不審な構造を端末内で検査。理由が分かる日本語の警告と、細かく調整できる設定を提供します。",
+  "version": "0.1.0",
+  "minimum_chrome_version": "140",
+  "permissions": ["storage", "declarativeNetRequest", "webNavigation", "alarms"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "Lookalike Link Alert" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "content_scripts": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "js": ["content.js"],
+    "run_at": "document_start",
+    "all_frames": false
+  }],
+  "web_accessible_resources": [{
+    "resources": ["warning.html"],
+    "matches": ["http://*/*", "https://*/*"]
+  }],
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; connect-src 'none'; frame-ancestors 'none'" },
+  "incognito": "not_allowed"
+}
