@@ -39,16 +39,30 @@ function chunk(type, bytes) {
   return Buffer.concat([length, name, bytes, crc]);
 }
 await mkdir('dist/icons', { recursive: true });
+// Supersampled coverage gives anti-aliased edges, which matters for the 128px store listing icon.
+const SAMPLES = 4;
+function coverage(size, x, y, inside) {
+  let hits = 0;
+  for (let sy = 0; sy < SAMPLES; sy++) {
+    for (let sx = 0; sx < SAMPLES; sx++) {
+      if (inside((x + (sx + 0.5) / SAMPLES) / size, (y + (sy + 0.5) / SAMPLES) / size)) hits++;
+    }
+  }
+  return hits / (SAMPLES * SAMPLES);
+}
+const shieldAt = (dx, dy) => dy > 0.12 && dy < 0.9 && Math.abs(dx - 0.5) < (dy < 0.55 ? 0.32 : (0.92 - dy) * 0.87);
+const markAt = (dx, dy) => (Math.abs(dx - 0.5) < 0.035 && dy > 0.3 && dy < 0.55) ||
+  (Math.abs(dx - 0.5) < 0.035 && dy > 0.64 && dy < 0.71);
 for (const size of [16, 32, 48, 128]) {
   const pixels = Buffer.alloc((size * 4 + 1) * size);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const dx = (x + 0.5) / size, dy = (y + 0.5) / size;
-      const shield = dy > 0.12 && dy < 0.9 && Math.abs(dx - 0.5) < (dy < 0.55 ? 0.32 : (0.92 - dy) * 0.87);
-      const mark = (Math.abs(dx - 0.5) < 0.035 && dy > 0.3 && dy < 0.55) ||
-        (Math.abs(dx - 0.5) < 0.035 && dy > 0.64 && dy < 0.71);
+      const shield = coverage(size, x, y, shieldAt);
+      const mark = coverage(size, x, y, markAt);
       const offset = y * (size * 4 + 1) + 1 + x * 4;
-      pixels.set(shield ? mark ? [255, 255, 255, 255] : [26, 95, 91, 255] : [0, 0, 0, 0], offset);
+      // Blend the white mark over the teal shield, then scale alpha by shield coverage.
+      const channel = (teal) => Math.round(teal + (255 - teal) * mark);
+      pixels.set([channel(26), channel(95), channel(91), Math.round(255 * shield)], offset);
     }
   }
   const header = Buffer.alloc(13);

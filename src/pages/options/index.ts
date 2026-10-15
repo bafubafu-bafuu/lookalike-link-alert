@@ -1,4 +1,5 @@
-import { defaults, parseSettings, importSettings, RULES, RULE_IDS, canonicalHost, MAX_SETTINGS_BYTES } from '../../shared/settings';
+import { defaults, parseSettings, importSettings, RULES, RULE_IDS, canonicalHost, MAX_SETTINGS_BYTES, MAX_LIST_ITEMS } from '../../shared/settings';
+import { SUGGESTED_DOMAINS } from '../../shared/suggestions';
 import { request } from '../../shared/messages';
 import { el, root, header, button, notice, message } from '../../shared/ui';
 
@@ -17,6 +18,8 @@ app.append(main);
 let draft = defaults();
 let dirty = false;
 let saving = false;
+// render() rebuilds the whole form, so the panel's open state has to survive re-renders.
+let suggestionsOpen = false;
 const save = button('変更を保存する', saveSettings, 'button primary');
 const saveStatus = el('span', 'muted', '変更は保存してから適用されます');
 const actions = el('div', 'actions sticky-actions');
@@ -134,7 +137,32 @@ function domainSection(): void {
       draft.protectedDomains.push(host); changed(); render();
     } catch (cause) { notice(errors, message(cause)); }
   }));
-  card.append(list, field);
+  card.append(list, field, suggestionsPanel());
+}
+function suggestionsPanel(): HTMLElement {
+  const panel = el('details', 'suggestions');
+  panel.open = suggestionsOpen;
+  panel.addEventListener('toggle', () => { suggestionsOpen = panel.open; });
+  panel.append(el('summary', '', 'よく狙われるサービスの候補から追加'),
+    el('p', 'muted', '候補は登録の手間を省くための一覧です。各サービスの正規ドメインは、ご自身が利用している URL と照らして確認してください。'));
+  for (const group of SUGGESTED_DOMAINS) {
+    const block = el('div', 'suggestion-group');
+    block.append(el('h3', '', group.category));
+    const row = el('div', 'suggestion-row');
+    for (const item of group.items) {
+      const add = button(`${item.label}（${item.host}）`, () => {
+        if (draft.protectedDomains.includes(item.host)) return;
+        if (draft.protectedDomains.length >= MAX_LIST_ITEMS) { notice(errors, `保護対象は ${MAX_LIST_ITEMS} 件までです。`); return; }
+        draft.protectedDomains.push(item.host); changed(); render();
+      }, 'chip');
+      add.disabled = draft.protectedDomains.includes(item.host);
+      if (add.disabled) add.title = '登録済み';
+      row.append(add);
+    }
+    block.append(row);
+    panel.append(block);
+  }
+  return panel;
 }
 function exceptionsSection(): void {
   const card = section('警告を省略するホスト', '完全一致が既定です。登録したホストでは警告を省略しますが、手動チェックで理由を確認できます。');

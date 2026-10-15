@@ -9,7 +9,10 @@ const CONFUSABLES: Readonly<Record<string, string>> = confusables;
 const INVISIBLE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u00ad\u034f\u061c\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/u;
 const JAPANESE = /^[\p{Script_Extensions=Han}\p{Script_Extensions=Hiragana}\p{Script_Extensions=Katakana}\p{Script_Extensions=Latin}\p{M}0-9-]+$/u;
 const HAS_JAPANESE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
-const SHORTENERS = new Set(['bit.ly', 't.co', 'tinyurl.com', 'goo.gl', 'ow.ly', 'buff.ly', 'is.gd']);
+const SHORTENERS = new Set([
+  'bit.ly', 't.co', 'tinyurl.com', 'goo.gl', 'ow.ly', 'buff.ly', 'is.gd', 'v.gd', 't.ly', 'rb.gy', 'cutt.ly',
+  'shorturl.at', 'tiny.cc', 'bit.do', 'x.gd', 'ux.nu', 'urx.nu', '00m.in', 'nav.cx', 'lnkd.in', 'rebrand.ly', 'bl.ink',
+]);
 export interface Finding { id: RuleId; level: Level; title: string; detail: string; evidence: string }
 export interface Analysis {
   status: 'checked' | 'uninspected';
